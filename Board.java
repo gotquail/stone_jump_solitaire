@@ -30,6 +30,9 @@ public class Board {
 		readBoardFromFile(fn);
 	}
 
+	/**
+	 * For cloning boards.
+	 */
 	public Board(Board b) {
 		numStones = 0;
 		nodes = new Node[SIZE][SIZE];
@@ -110,14 +113,14 @@ public class Board {
 		numStones--;
 	}
 
-	public void doReversal(Move m) {
+	public void revertMove(Move m) {
 		m.n1.setFilled(true);
 		m.n2.setFilled(true);
 		m.n3.setFilled(false);
 		numStones++;
 	}
 
-	public boolean isDone() {
+	public boolean isSolved() {
 		if (numStones == 1) return true;
 		return false;
 	}
@@ -214,6 +217,9 @@ public class Board {
 		}
 	}
 
+	/**
+	 * Write a visual representation of the board to stdout.
+	 */
 	public void print() {
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {

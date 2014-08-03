@@ -1,5 +1,6 @@
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class Main {
 
@@ -17,57 +18,78 @@ public class Main {
 	public static void solve(Board b) {
 		System.out.println("Solving board: ");
 		b.print();
+		long startTime = System.nanoTime();
 
-		if (b.isDone()) {
-			System.out.println("Solved.");
-			return;
-		}
-
+		// Set of all board states, used for dynamic programming.
 		HashSet<Long> boards = new HashSet<Long>();
 		boards.add(b.toLong());
 		
+		// Some debugging metrics.
+		int gamesFinished = 0;
 		int uniqueBoards = 0;
 		int redundantBoards = 0;
+		
+		Stack<Move> moves = new Stack();
+		for (Move m : b.getMoves()) moves.push(m);
 
-		ArrayList<Move> moves = b.getMoves();
-		while (!moves.isEmpty()) {
-			Move m = moves.get(moves.size() - 1);
-			if (m.isPerformed()) {
-				b.doReversal(m);
-				moves.remove(moves.size() - 1);
+		if (moves.empty()) {
+			System.out.println("Uhh board had no moves...");
+			b.print();
+			return;
+		}
+
+		while (!moves.empty()) {
+			// We don't actually want to pop because we need to know
+			// how to retrace our steps if we reach a dead end. So leave
+			// the moves on the stack and we'll pop() as we backtrack.			
+			Move m = moves.peek();
+
+			if (m.hasBeenPerformed()) {
+				b.revertMove(m);
+				// Okay now that the move has been reversed we can forget it.
+				moves.pop();
 				continue;
 			}
+
 			b.doMove(m);
 
-			if (b.isDone()) {
-				System.out.println("Found one.");
+			if (b.isSolved()) {
+				System.out.println("Solved it!");
 				b.print();
 				return;
 			}
 
-			if (!isUnseenState(b, boards)) {
-				redundantBoards++;
-			} else {
+			if (isUniqueBoardState(b, boards)) {
 				uniqueBoards++;
 				boards.add(b.toLong());
 				ArrayList<Move> newMoves = b.getMoves();
 				if (newMoves.isEmpty()) {
-					System.out.println("Unique: " + uniqueBoards + "; Redundant: " + redundantBoards);
-					b.print();
+					gamesFinished++;
+					// Print some progress info just to monitor things.
+					if (gamesFinished % 1000 == 0) {
+						double duration = System.nanoTime() - startTime;
+						double nanosPerSecond = 1000000000;
+						duration /= nanosPerSecond;
+						System.out.println("Unique: " + uniqueBoards + 
+							"; Redundant: " + redundantBoards + 
+							"; Games finished: " + gamesFinished +
+							"; Duration: " + duration);
+						b.print();
+					}
 				}
-				moves.addAll(b.getMoves());
-			}
-//			if (uniqueBoards % 10000 == 0) {
-//				System.out.println("Unique: " + uniqueBoards + "; Redundant: " + redundantBoards);
-//				b.print();
-//			}
-			
+				moves.addAll(newMoves);
+			} else {
+				redundantBoards++;
+			}			
 		}
 
 		System.out.println("Done.");
 	}
 
-	private static boolean isUnseenState(Board b, HashSet<Long> boards) {
+	// Return true if the board doesn't already exist within the set of boards.
+	private static boolean isUniqueBoardState(Board b, HashSet<Long> boards) {
+		// TODO: This function is really slow. The clone, rotation, mirror, and
+		// toLong calls are all O(n).
 		Board b2 = new Board(b);
 
 		// Check all rotations of the board.

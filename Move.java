@@ -17,7 +17,7 @@ public class Move {
 		isPerformed = true;
 	}
 
-	public boolean isPerformed() {
+	public boolean hasBeenPerformed() {
 		return isPerformed;
 	}
 
