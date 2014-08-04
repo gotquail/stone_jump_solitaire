@@ -9,6 +9,7 @@ CLASSES = \
 	Move.java \
 	Node.java \
 	Board.java \
+	Player.java \
 	Main.java 
 
 default: classes

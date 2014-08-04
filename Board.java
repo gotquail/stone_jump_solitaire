@@ -4,11 +4,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 
 /**
  * Representation of the 7x7 solitaire game. The 3 locations in each corner
- * are out of bounds. Hop stones checkers-style to try to have one stone
- * remaining.
+ * are out of bounds. Leap-frog stones (remove jumped stones) to try to have 
+ * one stone remaining.
  */
 public class Board {
 
@@ -24,8 +25,7 @@ public class Board {
 	protected int numStones;
 
 	public Board(String fn) {
-		nodes = new Node[SIZE][SIZE];
-		numStones = 0;
+		initMembers();
 
 		readBoardFromFile(fn);
 	}
@@ -34,8 +34,7 @@ public class Board {
 	 * For cloning boards.
 	 */
 	public Board(Board b) {
-		numStones = 0;
-		nodes = new Node[SIZE][SIZE];
+		initMembers();
 
 		for (int j = 0; j < SIZE; j++) {
 			for (int i = 0; i < SIZE; i++) {
@@ -48,61 +47,14 @@ public class Board {
 		}
 	}
 
+	private void initMembers() {
+		numStones = 0;
+		nodes = new Node[SIZE][SIZE];
+	}
+
 	public Node getNode(int x, int y) {
 		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) return null;
 		return nodes[x][y];
-	}
-
-	public ArrayList<Move> getMoves() {
-
-		// Detect empty locations on the board.
-		ArrayList<Node> empties = new ArrayList<Node>();
-		for (int j = 0; j < SIZE; j++) {
-			for (int i = 0; i < SIZE; i++) {
-				Node n = getNode(i, j);
-				if (n.isValid() && !n.isFilled()) empties.add(n);
-			}
-		}
-
-		// Detect valid moves by examining empty locations.
-		ArrayList<Move> moves = new ArrayList<Move>();
-		for (Node n : empties) {
-			Node n1, n2;
-
-			// Up.
-			n1 = getNode(n.x, n.y-1);
-			n2 = getNode(n.x, n.y-2);
-			if (n1 != null && n2 != null && 
-				n1.isFilled() && n2.isFilled()) {
-				moves.add(new Move(n2, n1, n));
-			}
-
-			// Down.
-			n1 = getNode(n.x, n.y+1);
-			n2 = getNode(n.x, n.y+2);
-			if (n1 != null && n2 != null && 
-				n1.isFilled() && n2.isFilled()) {
-				moves.add(new Move(n2, n1, n));
-			}
-
-			// Left.
-			n1 = getNode(n.x-1, n.y);
-			n2 = getNode(n.x-2, n.y);
-			if (n1 != null && n2 != null && 
-				n1.isFilled() && n2.isFilled()) {
-				moves.add(new Move(n2, n1, n));
-			}
-
-			// Right.
-			n1 = getNode(n.x+1, n.y);
-			n2 = getNode(n.x+2, n.y);
-			if (n1 != null && n2 != null && 
-				n1.isFilled() && n2.isFilled()) {
-				moves.add(new Move(n2, n1, n));
-			}
-		}
-
-		return moves;
 	}
 
 	public void doMove(Move m) {
@@ -143,7 +95,7 @@ public class Board {
 	}
 
 	/**
-	 * Mirror the board, so it looks like it would in a mirror.
+	 * Mirror the board (swap nodes around centred horizontal line of symmetry).
 	 */
 	public void mirror() {
 		for (int j = 0; j < SIZE; j++) {
@@ -156,7 +108,7 @@ public class Board {
 	}
 
 	/**
-	 *	Return compressed board state as a long.	
+	 *	Return board state compressed to a long.
 	 */
 	public long toLong() {
 		long n = 0;
@@ -235,6 +187,10 @@ public class Board {
 			System.out.println();
 		}
 		System.out.println();
+	}
+
+	public int getNumStones() {
+		return numStones;
 	}
 }
 

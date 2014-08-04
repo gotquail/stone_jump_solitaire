@@ -13,6 +13,10 @@ public class Move {
 		this.isPerformed = false;
 	}
 
+	public boolean isValid() {
+		return n1.isFilled() && n2.isFilled() && !n3.isFilled();
+	}
+
 	public void setPerformed() {
 		isPerformed = true;
 	}
