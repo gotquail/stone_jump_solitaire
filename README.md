@@ -2,15 +2,17 @@ TODO:
 
 Try to get the board compression down to 32-bit from 64.
 
+Optimization: I reverted the way moves are detected so once again I'm reading the whole board after every move. I could probably merge the two changes. Not sure if speed is really my issue right now though... it's not a terribly big board so going over it every time isn't the worst idea.
+
+Heuristics: 
+
+
+DONE:
+
 Heuristics? Determine some signs for when a board can't possibly lead to a solution.
 	- Use concentric rings. Prioritize stones on the outer ring. As a ring is emptied prioritize the next ring in. Or maybe just always sort the new moves by their distance from the centre. THERE's HOPE!
 		- So you could initialize a stack for each ring and then always just pop from the furthest-from-centre && non-empty stack.
 
-
-
-
-
-DONE:
 
 Improve the search for available moves. Right now it searches all the available openings on the board. I should just keep track of them. As you make a move just search the newly-opened locations for new moves.
 

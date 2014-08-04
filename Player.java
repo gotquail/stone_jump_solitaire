@@ -1,17 +1,18 @@
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.Collections;
 
 // Plays the solitaire game. Has a Board it's playing, thinks about 
 // and makes Moves.
 public class Player {
 
 	private Board board;
-	private ArrayDeque<Move> moves;
+	private ArrayDeque<Move> moveQueue;
 	
 	public Player(Board b) {
 		board = b;
-		moves = new ArrayDeque<Move>();
+		moveQueue = new ArrayDeque<Move>();
 	}
 
 	// TODO: Return list of moves used to solve the board.
@@ -20,7 +21,6 @@ public class Player {
 		board.print();
 		long startTime = System.nanoTime();
 
-		// TODO: I don't think I'm even using these....
 		// Set of all board states, used for dynamic programming.
 		HashSet<Long> boardsSeen = new HashSet<Long>();
 		boardsSeen.add(board.toLong());
@@ -32,26 +32,26 @@ public class Player {
 
 		// Start by looking through the whole board for every possible
 		// valid move.
-		moves = getAllPossibleMoves();
-		
-		if (moves.isEmpty()) {
+		moveQueue.addAll(getAllPossibleMoves());
+
+		if (moveQueue.isEmpty()) {
 			System.out.println("Board didn't have any starting moves.");
 			board.print();
 			return;
 		}
 
-		while (!moves.isEmpty() && !board.isSolved()) {
+		while (!moveQueue.isEmpty() && !board.isSolved()) {
 			// We don't actually want to pop because we need to know
 			// how to retrace our steps if we reach a dead end. So leave
 			// the moves on the stack and we'll pop() as we backtrack.			
-			Move m = moves.peekLast();
+			Move m = moveQueue.peekLast();
 			
 			if (!m.hasBeenPerformed()) {
-				doMove(m);
+				board.doMove(m);
 			} else {
-				revertMove(m);
+				board.revertMove(m);
 				// Okay now that the move has been reversed we can forget it.
-				moves.removeLast();
+				moveQueue.removeLast();
 				continue;
 			}
 
@@ -63,7 +63,7 @@ public class Player {
 				duplicateBoardsAvoided++;
 				// We've already been down this path... so abort.
 				revertMove(m);
-				moves.removeLast();
+				moveQueue.removeLast();
 				continue;
 			}		
 
@@ -73,11 +73,16 @@ public class Player {
 				return;
 			}
 
-			// TODO: This is not accurately measuring when games are done...
-			if (board.getNumStones() < 15) {
+			// Find new moves for the given board state.
+			ArrayList<Move> possibleMoves = getAllPossibleMoves();
+
+			if (possibleMoves.size() > 0) {
+				Collections.sort(possibleMoves);
+				moveQueue.addAll(getAllPossibleMoves());
+			} else {
 				gamesFinished++;
 				// Print some progress info just to monitor things.
-				if (gamesFinished % 1 == 0) {
+				if (gamesFinished % 1000 == 0) {
 					double duration = System.nanoTime() - startTime;
 					double nanosPerSecond = 1000000000;
 					duration /= nanosPerSecond;
@@ -92,8 +97,8 @@ public class Player {
 
 	}
 
-	private ArrayDeque<Move> getAllPossibleMoves() {
-		ArrayDeque<Move> allMoves = new ArrayDeque<Move>();
+	private ArrayList<Move> getAllPossibleMoves() {
+		ArrayList<Move> allMoves = new ArrayList<Move>();
 
 		// Detect empty locations on the board.
 		ArrayList<Node> empties = new ArrayList<Node>();
@@ -114,22 +119,22 @@ public class Player {
 	public void doMove(Move m) {
 		// Make sure it's still a valid move.
 		if (!m.isValid()) {
-			if (!m.equals(moves.peekLast())) {
+			if (!m.equals(moveQueue.peekLast())) {
 				// This should never happen.
 				System.out.println("Uh oh something wrong with the move stack");
 			}
 			// This should be safe since we're always dealing with the
 			// top element.
-			moves.removeLast();
+			moveQueue.removeLast();
 			return;
 		}
 
 		board.doMove(m);
 
 		// Check if new moves are now available.
-		moves.addAll(movesAtLocation(m.n3));
-		moves.addAll(movesAtLocation(m.n2));
-		moves.addAll(movesAtLocation(m.n1));
+		moveQueue.addAll(movesAtLocation(m.n3));
+		moveQueue.addAll(movesAtLocation(m.n2));
+		moveQueue.addAll(movesAtLocation(m.n1));
 	}
 
 	// Return list of all valid moves involving node n.
